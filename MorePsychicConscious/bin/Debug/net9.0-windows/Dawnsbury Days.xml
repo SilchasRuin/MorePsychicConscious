@@ -1994,6 +1994,17 @@
             Returns true if this creature is at least trained in the given skill, or has some ability to take trained actions in this skill even though it isn't trained in this skill.
             </summary>
         </member>
+        <member name="M:Dawnsbury.Core.Creatures.Creature.Overhead(System.String,Microsoft.Xna.Framework.Color,System.String,System.String,System.String,Dawnsbury.Core.Mechanics.Traits)">
+            <summary>
+            Triggers an overhead flyout on top of this creature.
+            </summary>
+            <param name="text">Text of the overhead flyout.</param>
+            <param name="color">Color of the overhead flyout.</param>
+            <param name="log">If not null, then this line will also be printed to the combat log.</param>
+            <param name="detailCaption">If <paramref name="logDetails"/> and this is not null, then this is the caption of the tooltip that appears when you mouse over the combat log line.</param>
+            <param name="logDetails">If <paramref name="log"/> and this is not null, then this is the text of the tooltip that appears when you mouse over the combat log line.</param>
+            <param name="traits">If <paramref name="log"/> and this is not null, then these are the traits displayed in the tooltip when you move over the combat log line.</param>
+        </member>
         <member name="P:Dawnsbury.Core.Creatures.Faction.IsGaia">
             <summary>
             This factions is either <see cref="P:Dawnsbury.Core.Creatures.Faction.IsGaiaFriends"/> or <see cref="P:Dawnsbury.Core.Creatures.Faction.IsGaiaPure"/>.
@@ -3285,7 +3296,7 @@
         </member>
         <member name="P:Dawnsbury.Core.Mechanics.QEffect.AfterYouTakeDamage">
             <summary>
-            This happens after you take AMOUNT of damage (which consists primarily of DAMAGE KIND, but could contain other damage kinds as well) from a COMBAT ACTION and you know WHETHER IT CAME FROM A CRITICAL HIT. If you need to know specifically ALL the damage kinds dealt to you, use <see cref="P:Dawnsbury.Core.Mechanics.QEffect.AfterYouTakeAmountOfDamageOfKind"/> instead.
+            This happens after you take AMOUNT of damage (which consists primarily of DAMAGE KIND, but could contain other damage kinds as well) from a COMBAT ACTION and you know WHETHER IT CAME FROM A CRITICAL HIT OR CRITICAL FAILURE. If you need to know specifically ALL the damage kinds dealt to you, use <see cref="P:Dawnsbury.Core.Mechanics.QEffect.AfterYouTakeAmountOfDamageOfKind"/> instead.
             </summary>
         </member>
         <member name="P:Dawnsbury.Core.Mechanics.QEffect.AfterYouTakeAmountOfDamageOfKind">
@@ -3483,6 +3494,11 @@
         <member name="P:Dawnsbury.Core.Mechanics.QEffect.YouBeginAction">
             <summary>
             Triggers as you begin to take the COMBAT ACTION, just after any attacks-of-opportunity resolve
+            </summary>
+        </member>
+        <member name="P:Dawnsbury.Core.Mechanics.QEffect.OfferAlternateSkillForInitiative">
+            <summary>
+            At the beginning of each encounter, if the returned skill is non-null and is greater than your Perception, then use that instead of Perception for your initiative.
             </summary>
         </member>
         <member name="F:Dawnsbury.Core.Mechanics.QEffect.ReducesPersistentDamageRecoveryCheckDc">
@@ -3820,11 +3836,36 @@
             Represents the Wyvern Venom affliction (as per the spell).
             </summary>
         </member>
+        <member name="F:Dawnsbury.Core.Mechanics.QEffectId.HoldingBreath">
+            <summary>
+            The creature is holding its breath as per the rules for Suffocation.
+            </summary>
+        </member>
+        <member name="F:Dawnsbury.Core.Mechanics.QEffectId.ElfStep">
+            <summary>
+            The first 2 tiles moved count as steps instead of only the first one
+            </summary>
+        </member>
+        <member name="F:Dawnsbury.Core.Mechanics.QEffectId.TenFootVisionRadius">
+            <summary>
+            The effect owner treats all creatures 15 feet or more away from them as being hidden
+            </summary>
+        </member>
+        <member name="F:Dawnsbury.Core.Mechanics.QEffectId.PervasiveSuperstition">
+            <summary>
+            The effect owner will not be asked if they want to use their reaction for Orc Superstition, or effects based on that feat.
+            </summary>
+        </member>
         <member name="M:Dawnsbury.Core.Mechanics.Rules.DeathRules.ShouldDieImmediately(Dawnsbury.Core.Creatures.Creature)">
             <summary>
             Returns true if, upon reaching 0 HP, the creature should immediately die instead of entering a dying state.
             </summary>
             <returns></returns>
+        </member>
+        <member name="M:Dawnsbury.Core.Mechanics.Rules.FlankingRules.IsOpposite(Dawnsbury.Core.Tiles.Tile,Dawnsbury.Core.Creatures.Creature,Dawnsbury.Core.Creatures.Creature)">
+            <summary>
+            Check if TILE is on the opposite side of FLANKER, with FLANKEE in between
+            </summary>
         </member>
         <member name="M:Dawnsbury.Core.Mechanics.Rules.HiddenRules.IsHiddenFromAllEnemies(Dawnsbury.Core.Creatures.Creature)">
             <summary>
@@ -4162,6 +4203,11 @@
             </summary>
             <param name="additionalRestriction">When CASTER uses this action, this returns a reason for why that action can't be performed, or null if it's okay to perform.</param>
         </member>
+        <member name="M:Dawnsbury.Core.Mechanics.Targeting.Targets.StepByStepStrideTarget.#ctor(System.Int32)">
+            <summary>
+            This constructor create a step-by-step target that can only target non-rough terrtain, with a max tile distance equal to STEP DISTANCE
+            </summary>
+        </member>
         <member name="P:Dawnsbury.Core.Mechanics.Treasure.ArmorProperties.ACBonus">
             <summary>
             Positive number in AC values, such as 4.
@@ -4185,6 +4231,16 @@
         <member name="P:Dawnsbury.Core.Mechanics.Treasure.ArmorProperties.Strength">
             <summary>
             Strength score, such as 14.
+            </summary>
+        </member>
+        <member name="P:Dawnsbury.Core.Mechanics.Treasure.ArmorProperties.ItemBonus">
+            <summary>
+            Item bonus to AC on top of the standard AC, usually coming from fundamental armor runes.
+            </summary>
+        </member>
+        <member name="P:Dawnsbury.Core.Mechanics.Treasure.ArmorProperties.ItemBonusToSavingThrows">
+            <summary>
+            Item bonus to saving throws from fundamental armor runes.
             </summary>
         </member>
         <member name="T:Dawnsbury.Core.Mechanics.Treasure.ItemModifications">
@@ -4376,6 +4432,11 @@
             Assigns this possibility to a "possibility group". If <see cref="P:Dawnsbury.IO.PlayerProfile.CombineRelatedActions"/> is enabled, then if there are two full-height actions of the same <see cref="P:Dawnsbury.Core.Possibilities.Possibility.PossibilityGroup"/> in the bottom action bar next to each other, they will be merged into the same column as half-height actions. If there are three such actions next to each other, they will be combined into a single submenu named as the possibility group. Use the constants available in <see cref="T:Dawnsbury.Constants"/> in preference to pure decompiled strings.
             </summary>
         </member>
+        <member name="M:Dawnsbury.Core.Possibilities.Possibility.WithPossibilitySize(Dawnsbury.Core.Possibilities.PossibilitySize)">
+            <summary>
+            Sets the default size for this possibility.
+            </summary>
+        </member>
         <member name="P:Dawnsbury.Core.Possibilities.PossibilitySection.PossibilitySectionId">
             <summary>
             Some possibility sections have a technical ID so that you can refer to them without using the human-readable name in mods and effects.
@@ -4496,6 +4557,18 @@
             <summary>
             The tile counts as being on fire for the purposes of some effects.
             </summary>
+        </member>
+        <member name="M:Dawnsbury.Core.Tiles.Tile.TileOverhead(System.String,Microsoft.Xna.Framework.Color,System.String,System.String,System.String,Dawnsbury.Core.Mechanics.Traits,System.Boolean)">
+            <summary>
+            Triggers an overhead flyout on top of this tile.
+            </summary>
+            <param name="text">Text of the overhead flyout.</param>
+            <param name="color">Color of the overhead flyout.</param>
+            <param name="log">If not null, then this line will also be printed to the combat log.</param>
+            <param name="detailCaption">If <paramref name="logDetails"/> and this is not null, then this is the caption of the tooltip that appears when you mouse over the combat log line.</param>
+            <param name="logDetails">If <paramref name="log"/> and this is not null, then this is the text of the tooltip that appears when you mouse over the combat log line.</param>
+            <param name="traits">If <paramref name="log"/> and this is not null, then these are the traits displayed in the tooltip when you move over the combat log line.</param>
+            <param name="displacedToTheRight">This overhead should be displayed on top of the tile intersection to the right of this tile, not on top of this tile itself.</param>
         </member>
         <member name="P:Dawnsbury.Core.Tiles.TileQEffect.AfterCreatureEntersHere">
             <summary>
