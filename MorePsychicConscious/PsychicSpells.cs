@@ -138,7 +138,7 @@ public abstract class PsychicSpells : ModData
                 PsychicAmpInformation? psychicAmpInformation = spellInformation.PsychicAmpInformation;
                 bool amped = (psychicAmpInformation != null ? (psychicAmpInformation.Amped ? 1 : 0) : 0) != 0;
                 CombatAction forbiddenThought = Spells.CreateModern(IllustrationName.Confusion, "Forbidden Thought", [Trait.Cantrip, Trait.Enchantment, Trait.Mental, Trait.Level1PsychicCantrip, Trait.Psychic],
-                    "You place a psychic lock in a foe's mind that prevents it from a specific action.", $"Choose “Strike,” “Stride,” “Cast a Spell,” or a specific action you know the creature to have (such as “Breath Weapon” against a dragon). If the creature attempts that action on its next turn, it must surmount your lock to do so, causing it to take {1+spellLevel}d6 mental damage (with a basic Will save). The target is then temporarily immune for 1 minute." +
+                    "You place a psychic lock in a foe's mind that prevents it from a specific action.", $"Choose “Strike,” “Stride,” “Cast a Spell,” or a specific action you know the creature to have (such as “Breath Weapon” against a dragon). If the creature attempts that action on its next turn, it must surmount your lock to do so, causing it to take {S.HeightenedVariable(spellLevel, 0)+"d6"} mental damage (with a basic Will save). The target is then temporarily immune for 1 minute." +
                     $"\n\n{{b}}Amp{{/b}} Your telepathic push is particularly shocking to those who resist it. If the target fails its save, it's also stunned 1.",
                     Target.Ranged(6), spellLevel, null)
                     .WithActionCost(2).WithHeighteningOfDamageEveryLevel(spellLevel, 1, inCombat, "1d6").WithActionId(ActionIds.ForbiddenThought)
@@ -191,7 +191,7 @@ public abstract class PsychicSpells : ModData
                 PsychicAmpInformation? psychicAmpInformation = spellInformation.PsychicAmpInformation;
                 bool amped = (psychicAmpInformation != null ? (psychicAmpInformation.Amped ? 1 : 0) : 0) != 0;
                 CombatAction shatterMind = Spells.CreateModern(IllustrationName.BrainDrain, "Shatter Mind", [Trait.Cantrip, Trait.Evocation, Trait.Mental, Trait.Psychic, Trait.Level1PsychicCantrip], "You telepathically assail the minds of your foes.",
-                    "You deal 3d4 mental damage to all enemies in the area, with a basic Will save.", Target.Cone(amped ? 6 : 3), spellLevel, SpellSavingThrow.Basic(Defense.Will))
+                    $"Deal {S.HeightenedVariable(spellLevel, 0) + (amped ? "d10":"d4")} mental damage to all enemies in the area, with a basic Will save.", Target.Cone(amped ? 6 : 3), spellLevel, SpellSavingThrow.Basic(Defense.Will))
                     .WithActionCost(2).WithHeighteningOfDamageEveryLevel(spellLevel, 3, inCombat, amped ? "1d10" :"1d4");
                 if (amped)
                 {
@@ -224,6 +224,7 @@ public abstract class PsychicSpells : ModData
                 {
                     int num = power.SpellcastingSource!.SpellcastingAbilityModifier;
                     DiceFormula diceFormula1 = DiceFormula.FromText(num.ToString(), "Spellcasting ability modifier");
+                    if (amped) diceFormula1 = DiceFormula.FromText("d10", "Amp");
                     if (power.SpellLevel >= 3)
                     {
                         ComplexDiceFormula complexDiceFormula = new();
