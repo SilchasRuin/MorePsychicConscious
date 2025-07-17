@@ -27,7 +27,7 @@ public abstract class PsychicSpells : ModData
 {
     public static void RegisterSpells()
     {
-        SpellIds.Message = ModManager.RegisterNewSpell("Message", 1, (_, caster, spellLevel, _, spellInformation) =>
+        SpellIds.Message = ModManager.RegisterNewSpell("Message", 0, (_, caster, spellLevel, _, spellInformation) =>
         {
             PsychicAmpInformation? psychicAmpInformation = spellInformation.PsychicAmpInformation;
             bool amped = (psychicAmpInformation != null ? (psychicAmpInformation.Amped ? 1 : 0) : 0) != 0;
@@ -46,12 +46,15 @@ public abstract class PsychicSpells : ModData
                                 self.AddQEffect(new QEffect(ExpirationCondition.Ephemeral)
                                 {
                                     BonusToDefenses = (_, _, defense) =>
-                                        defense == Defense.Will ? new Bonus(1, BonusType.Circumstance, "Message") : null
+                                        defense == Defense.Will ? new Bonus(1, BonusType.Circumstance, "Message") : null,
                                 });
                                 effect.ExpiresAt = ExpirationCondition.Immediately;
                             }
                             return Task.CompletedTask;
-                        }
+                        },
+                        Illustration = IllustrationName.Divination,
+                        Name = "Message",
+                        Description = "You gain a +1 circumstance bonus to your next will save."
                     });
                     if (amped)
                     {
@@ -129,7 +132,7 @@ public abstract class PsychicSpells : ModData
             }
             return message;
         });
-        SpellIds.ForbiddenThought = ModManager.RegisterNewSpell("Forbidden Thought", 1,
+        SpellIds.ForbiddenThought = ModManager.RegisterNewSpell("Forbidden Thought", 0,
             (_, _, spellLevel, inCombat, spellInformation) =>
             {
                 PsychicAmpInformation? psychicAmpInformation = spellInformation.PsychicAmpInformation;
@@ -149,7 +152,9 @@ public abstract class PsychicSpells : ModData
                             CombatAction action = (CombatAction)combatAction;
                             specific.Add(action.Name);
                         }
-                        specific.Add("Cancel");
+                        if (specific.Count == 0)
+                            options.Remove("Specific");
+                        else specific.Add("Cancel");
                         ChoiceButtonOption chosenOption = await self.AskForChoiceAmongButtons(IllustrationName.QuestionMark, "Choose an option for forbidden thought", options.ToArray());
                         switch (options[chosenOption.Index])
                         {
@@ -178,17 +183,15 @@ public abstract class PsychicSpells : ModData
                                 break;
                         }
                     });
-                
                 return forbiddenThought;
-
             });
-        SpellIds.ShatterMind = ModManager.RegisterNewSpell("Shatter Mind", 1,
+        SpellIds.ShatterMind = ModManager.RegisterNewSpell("Shatter Mind", 0,
             (_, _, spellLevel, inCombat, spellInformation) =>
             {
                 PsychicAmpInformation? psychicAmpInformation = spellInformation.PsychicAmpInformation;
                 bool amped = (psychicAmpInformation != null ? (psychicAmpInformation.Amped ? 1 : 0) : 0) != 0;
                 CombatAction shatterMind = Spells.CreateModern(IllustrationName.BrainDrain, "Shatter Mind", [Trait.Cantrip, Trait.Evocation, Trait.Mental, Trait.Psychic, Trait.Level1PsychicCantrip], "You telepathically assail the minds of your foes.",
-                    "You deal 3d4 mental damage to all enemies in the area, with a basic Will save.", Target.Cone(amped ? 6 : 3), 3, SpellSavingThrow.Basic(Defense.Will))
+                    "You deal 3d4 mental damage to all enemies in the area, with a basic Will save.", Target.Cone(amped ? 6 : 3), spellLevel, SpellSavingThrow.Basic(Defense.Will))
                     .WithActionCost(2).WithHeighteningOfDamageEveryLevel(spellLevel, 3, inCombat, amped ? "1d10" :"1d4");
                 if (amped)
                 {
@@ -204,7 +207,7 @@ public abstract class PsychicSpells : ModData
                 });
                 return shatterMind;
             });
-        ModManager.ReplaceExistingSpell(SpellId.Daze, 1, (owner, level, inCombat, spellInformation) =>
+        ModManager.ReplaceExistingSpell(SpellId.Daze, 0, (owner, level, inCombat, spellInformation) =>
         {
             PsychicAmpInformation? psychicAmpInformation = spellInformation.PsychicAmpInformation;
             bool amped = (psychicAmpInformation != null ? (psychicAmpInformation.Amped ? 1 : 0) : 0) != 0;
