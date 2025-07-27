@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography.X509Certificates;
+﻿using System.Reflection.Metadata.Ecma335;
+using System.Security.Cryptography.X509Certificates;
 using Dawnsbury;
 using Dawnsbury.Audio;
 using Dawnsbury.Auxiliary;
@@ -1275,29 +1276,108 @@ public abstract class PsychicSpells : ModData
         {
             AfterCreatureEntersHere = async creature =>
             {
-                if ( /*exit.PrimaryOccupant != null ||*/ creature.EnemyOf(owner) || (creature.AnimationData.LongMovement?.Path != null && !Equals(creature.AnimationData.LongMovement?.Path.LastOrDefault(), creature.Occupies))) return;
+                Tile original = creature.Occupies;
+                if (creature.EnemyOf(owner) || (creature.AnimationData.LongMovement?.Path != null && !Equals(creature.AnimationData.LongMovement?.Path.LastOrDefault(), creature.Occupies))) return;
                 if (await creature.AskForConfirmation(IllustrationName.DimensionDoor,
                         "Would you like to teleport to the exit portal?", "Yes"))
+                {
                     await CommonSpellEffects.Teleport(creature, exit);
-                if (creature.FindQEffect(MQEffectIds.Complete) is  { } qff && creature.Speed > qff.Value)
-                {
-                    int move = qff.Owner.Speed -  qff.Value;
-                    QEffect setSpeed = new QEffect() {BonusToAllSpeeds = _ => new Bonus(move - creature.Speed, BonusType.Untyped, "Finish Movement")};
-                    qff.Owner.AddQEffect(setSpeed);
-                    await qff.Owner.StrideAsync("Finish your stride?",
-                        allowCancel: true);
-                    setSpeed.ExpiresAt = ExpirationCondition.Immediately;
-                    qff.Value = 0;
-                }
-
-                if (exit.AdditionalOccupant != null)
-                {
-                   await exit.AdditionalOccupant.SingleTileMove(exit.GetShuntoffTile(exit.AdditionalOccupant), null);
+                    if (exit is { AdditionalOccupant: not null, PrimaryOccupant: not null } && exit.PrimaryOccupant.EnemyOf(creature))
+                    {
+                        var tumble = await Checks.RollTumbleThrough(creature, exit.PrimaryOccupant);
+                        if (!tumble)
+                        {
+                            await CommonSpellEffects.Teleport(creature, original);
+                        }
+                        else if (creature.FindQEffect(MQEffectIds.Complete) is  { } qff && creature.Speed > qff.Value)
+                        {
+                            int move = qff.Owner.Speed -  qff.Value;
+                            QEffect setSpeed = new() {BonusToAllSpeeds = _ => new Bonus(move - creature.Speed, BonusType.Untyped, "Finish Movement")};
+                            qff.Owner.AddQEffect(setSpeed);
+                            await qff.Owner.StrideAsync("Finish your stride?",
+                                allowCancel: true);
+                            setSpeed.ExpiresAt = ExpirationCondition.Immediately;
+                            qff.Value = 0;
+                        }
+                        if (exit.AdditionalOccupant != null)
+                        {
+                            await CommonSpellEffects.Teleport(creature, original);
+                        }
+                    }
+                    else
+                    {
+                        if (creature.FindQEffect(MQEffectIds.Complete) is  { } qff && creature.Speed > qff.Value)
+                        {
+                            int move = qff.Owner.Speed -  qff.Value;
+                            QEffect setSpeed = new() {BonusToAllSpeeds = _ => new Bonus(move - creature.Speed, BonusType.Untyped, "Finish Movement")};
+                            qff.Owner.AddQEffect(setSpeed);
+                            await qff.Owner.StrideAsync("Finish your stride?",
+                                allowCancel: true);
+                            setSpeed.ExpiresAt = ExpirationCondition.Immediately;
+                            qff.Value = 0;
+                        }
+                        if (exit.AdditionalOccupant != null)
+                        {
+                            await CommonSpellEffects.Teleport(creature, original);
+                        }
+                    }
                 }
             },
             Illustration = IllustrationName.DimensionDoor,
             Name = "Tesseract Entrance" + (amped ? " and Exit" : ""),
             VisibleDescription = "When you enter this tile you may teleport to the exit"+(amped ? ", this tile may also be teleported to from the exit." : "."),
+            StateCheck = effect =>
+            {
+                if (effect.Owner.PrimaryOccupant is { } creature)
+                {
+                    creature.AddQEffect(new QEffect(ExpirationCondition.Ephemeral)
+                    {
+                        ProvideContextualAction = qf =>
+                        {
+                            CombatAction enterTunnel = new CombatAction(qf.Owner, IllustrationName.DimensionDoor,
+                                "Enter the Tunnel",
+                                [Trait.DoNotShowInCombatLog, Trait.Move, Trait.DoNotShowOverheadOfActionName, Trait.Basic],
+                                "Teleports you to the exit, you may then stride up to your speed.", Target.Self())
+                                .WithSoundEffect(SfxName.PhaseBolt)
+                                .WithActionCost(1)
+                                .WithEffectOnSelf(async self =>
+                                {
+                                    Tile original = self.Occupies;
+                                    await CommonSpellEffects.Teleport(self, exit);
+                                    if (exit is { AdditionalOccupant: not null, PrimaryOccupant: not null } &&
+                                        exit.PrimaryOccupant.EnemyOf(self))
+                                    {
+                                        var tumble = await Checks.RollTumbleThrough(self, exit.PrimaryOccupant);
+                                        if (!tumble)
+                                        {
+                                            await CommonSpellEffects.Teleport(self, original);
+                                        }
+                                        else
+                                        {
+                                            await self.StrideAsync("Finish your stride?",
+                                                allowCancel: true);
+                                        }
+                                        if (exit.AdditionalOccupant != null)
+                                        {
+                                            await CommonSpellEffects.Teleport(self, original);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        await self.StrideAsync("Finish your stride?",
+                                            allowCancel: true);
+                                        if (exit.AdditionalOccupant != null)
+                                        {
+                                            await CommonSpellEffects.Teleport(self, original);
+                                        }
+                                    }
+                
+                                });
+                            return new ActionPossibility(enterTunnel);
+                        }
+                    });
+                }
+            }
         };
     }
 
