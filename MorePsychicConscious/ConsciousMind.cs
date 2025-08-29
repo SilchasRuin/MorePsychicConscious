@@ -1,7 +1,4 @@
-﻿using System.Collections.Immutable;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography.X509Certificates;
-using Dawnsbury.Audio;
+﻿using Dawnsbury.Audio;
 using Dawnsbury.Auxiliary;
 using Dawnsbury.Core;
 using Dawnsbury.Core.Animations;
@@ -28,7 +25,6 @@ using Dawnsbury.Display.Illustrations;
 using Dawnsbury.Display.Text;
 using Dawnsbury.IO;
 using Dawnsbury.Modding;
-using Dawnsbury.Phases.Menus;
 using Microsoft.Xna.Framework;
 using static MorePsychicConscious.ConsciousMindFeat;
 
@@ -884,7 +880,7 @@ public abstract class ConsciousMind : ModData
             ap.RecalculateUsability();
             return true;
         }).CreateActions(true).FirstOrDefault() as CombatAction;
-        return new QEffect
+        return new QEffect(ExpirationCondition.Ephemeral)
         {
             BeforeYourActiveRoll = (effect, action, target) =>
             {
@@ -907,19 +903,34 @@ public abstract class ConsciousMind : ModData
                 {
                     RerollActiveRoll = async (eff, breakdown, combatAction, _) =>
                     {
-                        if (combatAction.ActiveRollSpecification != null)
+                        CombatAction reactionGuidance = new CombatAction(caster, ampedGuidance.Illustration, ampedGuidance.Name,
+                                ampedGuidance.Traits.Append(Trait.DoNotShowInCombatLog)
+                                    .Append(Trait.DoNotShowOverheadOfActionName).ToArray(), ampedGuidance.Description,
+                                ampedGuidance.Target).WithActionCost(0)
+                            .WithSoundEffect((SfxName)ampedGuidance.SoundEffectName!);
+                        reactionGuidance.SpellInformation = ampedGuidance.SpellInformation;
+                        if (combatAction.ActiveRollSpecification != null && reactionGuidance.CanBeginToUse(caster))
                         {
                             var defense = combatAction.ActiveRollSpecification.TaggedDetermineDC
                                 .CalculatedNumberProducer.Invoke(combatAction, self, target).TotalNumber;
                             var fail = defense - breakdown.TotalRollValue;
                             if (((breakdown.CheckResult == CheckResult.Failure && fail == 1) || (breakdown.CheckResult == CheckResult.CriticalFailure && fail == 10)) && breakdown.D20Roll != 1)
                             {
-                                if (await caster.AskToUseReaction(
-                                        $"{self.Name}'s {action.Name} vs {target.Name} is about to {(breakdown.CheckResult == CheckResult.CriticalFailure ? "critically fail" : "fail")}. Use a reaction to cast amped guidance to turn the {breakdown.CheckResult.ToString()} into a {breakdown.CheckResult.ImproveByOneStep().ToString()}?"))
+                                if (await caster.Battle.AskToUseReaction(caster,
+                                        $"{self.Name}'s {combatAction.Name} vs {target.Name} is about to {(breakdown.CheckResult == CheckResult.CriticalFailure ? "critically fail" : "fail")}. Use a reaction to cast amped guidance to turn the {breakdown.CheckResult.ToString()} into a {breakdown.CheckResult.ImproveByOneStep().ToString()}?", caster.Illustration, ampedGuidance.Traits.ToArray()))
                                 {
-                                    await caster.Battle.GameLoop.FullCast(new CombatAction(caster, ampedGuidance.Illustration, ampedGuidance.Name, ampedGuidance.Traits.Append(Trait.DoNotShowInCombatLog).Append(Trait.DoNotShowOverheadOfActionName).ToArray(), ampedGuidance.Description, ampedGuidance.Target).WithActionCost(0).WithSoundEffect((SfxName)ampedGuidance.SoundEffectName!), ChosenTargets.CreateSingleTarget(self));
+                                    bool cast = await caster.Battle.GameLoop.FullCast(reactionGuidance, ChosenTargets.CreateSingleTarget(self));
+                                    if (!cast || reactionGuidance.Disrupted)
+                                    {
+                                        caster.Overhead("Amped Guidance", Color.Black, caster + "attempts to cast {b}Amped Guidance{/b}, but it was disrupted!",
+                                            ampedGuidance.Name + " {icon:Reaction}",
+                                            ampedGuidance.Description, ampedGuidance.Traits);
+                                        caster.Spellcasting!.FocusPoints -= 1;
+                                        eff.ExpiresAt = ExpirationCondition.Immediately;
+                                        return RerollDirection.DoNothing;
+                                    }
                                     caster.Overhead("Amped Guidance", Color.Black, caster + " casts {b}Amped Guidance{/b}.",
-                                        ampedGuidance.Name + " {icon.Reaction}",
+                                        ampedGuidance.Name + " {icon:Reaction}",
                                         ampedGuidance.Description, ampedGuidance.Traits);
                                     self.AddQEffect(new QEffect(ExpirationCondition.Ephemeral)
                                     {
@@ -927,12 +938,13 @@ public abstract class ConsciousMind : ModData
                                             new Bonus(1, BonusType.Status, "Amped Guidance")
                                     });
                                     caster.Spellcasting!.FocusPoints -= 1;
-                                    eff.ExpiresAt = ExpirationCondition.Ephemeral;
+                                    eff.ExpiresAt = ExpirationCondition.Immediately;
                                     return RerollDirection.KeepRollButRedoCalculation;
                                 }
                             }
+                            eff.ExpiresAt = ExpirationCondition.Immediately;
                         }
-                        eff.ExpiresAt = ExpirationCondition.Ephemeral;
+                        eff.ExpiresAt = ExpirationCondition.Immediately;
                         return RerollDirection.DoNothing;
                     }
                 };
@@ -966,19 +978,34 @@ public abstract class ConsciousMind : ModData
                 {
                     RerollSavingThrow = async (qEffect, breakdown, combatAction) =>
                     {
-                        if (combatAction.SavingThrow != null)
+                        CombatAction reactionGuidance = new CombatAction(caster, ampedGuidance.Illustration, ampedGuidance.Name,
+                                ampedGuidance.Traits.Append(Trait.DoNotShowInCombatLog)
+                                    .Append(Trait.DoNotShowOverheadOfActionName).ToArray(), ampedGuidance.Description,
+                                ampedGuidance.Target).WithActionCost(0)
+                            .WithSoundEffect((SfxName)ampedGuidance.SoundEffectName!);
+                        reactionGuidance.SpellInformation = ampedGuidance.SpellInformation;
+                        if (combatAction.SavingThrow != null && reactionGuidance.CanBeginToUse(caster))
                         {
                             var dc = combatAction.SavingThrow.DC.Invoke(combatAction.Owner);
                             var roll = breakdown.TotalRollValue;
                             var fail = dc - roll;
                             if (((breakdown.CheckResult == CheckResult.Failure && fail == 1) || (breakdown.CheckResult == CheckResult.CriticalFailure && fail == 10)) && breakdown.D20Roll != 1)
                             {
-                                if (await caster.AskToUseReaction(
-                                        $"{self.Name} is about to {(breakdown.CheckResult == CheckResult.CriticalFailure ? "critically fail" : "fail")} a saving throw against {action.Name}. Use a reaction to cast amped guidance to turn the {breakdown.CheckResult.ToString()} into a {breakdown.CheckResult.ImproveByOneStep().ToString()}?"))
+                                if (await caster.Battle.AskToUseReaction(caster,
+                                        $"{self.Name} is about to {(breakdown.CheckResult == CheckResult.CriticalFailure ? "critically fail" : "fail")} a saving throw against {action.Name}. Use a reaction to cast amped guidance to turn the {breakdown.CheckResult.ToString()} into a {breakdown.CheckResult.ImproveByOneStep().ToString()}?", caster.Illustration, ampedGuidance.Traits.ToArray()))
                                 {
-                                    await caster.Battle.GameLoop.FullCast(new CombatAction(caster, ampedGuidance.Illustration, ampedGuidance.Name, ampedGuidance.Traits.Append(Trait.DoNotShowInCombatLog).Append(Trait.DoNotShowOverheadOfActionName).ToArray(), ampedGuidance.Description, ampedGuidance.Target).WithActionCost(0).WithSoundEffect((SfxName)ampedGuidance.SoundEffectName!), ChosenTargets.CreateSingleTarget(self));
+                                    bool cast = await caster.Battle.GameLoop.FullCast(reactionGuidance, ChosenTargets.CreateSingleTarget(self));
+                                    if (!cast || reactionGuidance.Disrupted)
+                                    {
+                                        caster.Overhead("Amped Guidance", Color.Black, caster + "attempts to cast {b}Amped Guidance{/b}, but it was disrupted!",
+                                            ampedGuidance.Name + " {icon:Reaction}",
+                                            ampedGuidance.Description, ampedGuidance.Traits);
+                                        caster.Spellcasting!.FocusPoints -= 1;
+                                        qEffect.ExpiresAt = ExpirationCondition.Immediately;
+                                        return RerollDirection.DoNothing;
+                                    }
                                     caster.Overhead("Amped Guidance", Color.Black, caster + " casts {b}Amped Guidance{/b}.",
-                                        ampedGuidance.Name + " {icon.Reaction}",
+                                        ampedGuidance.Name + " {icon:Reaction}",
                                         ampedGuidance.Description, ampedGuidance.Traits);
                                     self.AddQEffect(new QEffect(ExpirationCondition.Ephemeral)
                                     {
@@ -986,19 +1013,18 @@ public abstract class ConsciousMind : ModData
                                             new Bonus(1, BonusType.Status, "Amped Guidance")
                                     });
                                     caster.Spellcasting!.FocusPoints -= 1;
-                                    qEffect.ExpiresAt = ExpirationCondition.Ephemeral;
+                                    qEffect.ExpiresAt = ExpirationCondition.Immediately;
                                     return RerollDirection.KeepRollButRedoCalculation;
                                 }
                             }
                         }
-                        qEffect.ExpiresAt = ExpirationCondition.Ephemeral;
+                        qEffect.ExpiresAt = ExpirationCondition.Immediately;
                         return RerollDirection.DoNothing;
                     }
                 };
                 self.AddQEffect(savingThrow);
                 return Task.CompletedTask;
-            },
-            ExpiresAt = ExpirationCondition.Ephemeral
+            }
         };
     }
     private static string AorAn(string checkName)

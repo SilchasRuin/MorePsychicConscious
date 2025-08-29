@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MorePsychicConscious")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+67a3034e6bae30a2b3ec444cbcfbda09fd9a9ec7")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+45038869f5c565b5589b49ff21c16d178a34259f")]
 [assembly: System.Reflection.AssemblyProductAttribute("MorePsychicConscious")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MorePsychicConscious")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

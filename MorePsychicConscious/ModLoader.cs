@@ -56,7 +56,7 @@ public class ModLoader
             ModManager.AddFeat(feat);
             AllFeats.GetFeatByFeatName(FeatName.ParallelBreakthrough).Subfeats?.Add(feat);
         }
-        if (!ModManager.TryParse("PrepareToAid", out ActionId _))
+        if (!ModManager.TryParse("HelpUp", out ActionId _))
         {
             ModManager.RegisterBooleanSettingsOption("MoreBasicActions.AidDCIs15", "Psychic Enhanced: Reduce Aid DC",
                 "The DC to Aid is normally 20. If enabled, the DC is reduced to 15 instead.",

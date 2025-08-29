@@ -1,7 +1,4 @@
-﻿using System.Reflection.Metadata.Ecma335;
-using System.Security.Cryptography.X509Certificates;
-using Dawnsbury;
-using Dawnsbury.Audio;
+﻿using Dawnsbury.Audio;
 using Dawnsbury.Auxiliary;
 using Dawnsbury.Campaign.Encounters.Elements_of_a_Crime;
 using Dawnsbury.Core;
@@ -920,7 +917,9 @@ public abstract class PsychicSpells : ModData
                 "You can Seek a 30 foot emanation.\n\nRegardless of whether you Seek, target one ally and one enemy in the area; if a target is concealed or hidden from you, you automatically succeed at the flat check to target it with this spell. You prepare to {tooltip:aid}Aid{/} the target ally on an attack roll against the target enemy. If you take this Aid reaction, you use your spell attack modifier and proficiency rank on your check to Aid. If you critically fail the roll to Aid, you get a failure instead." +
                 (!amped ? "" : $"\n\n{{Blue}}The target enemy takes a -1 circumstance penalty on its next saving throw. You and all allies within 30 feet gain a +1 circumstance bonus to attacks and damage against the creature. If you take the Aid reaction you prepared for and succeed at your roll, these bonuses increase to +2 on the attack you're Aiding. On a critical success, they increase to {(caster != null && caster.Proficiencies.Get(Trait.Spell) == Proficiency.Legendary ? "4" : "3")}{{/Blue}}") +
                 (inCombat ? "" : "\n\n{Blue}{b}Amp{/b} The target enemy takes a -1 circumstance penalty on its next saving throw. You and all allies within 30 feet gain a +1 circumstance bonus to attacks and damage against the creature.{/Blue}" +
-                 "\n\n{Blue}If you take the Aid reaction you prepared for and succeed at your roll, these bonuses increase to +2 on the attack you're Aiding. On a critical success, they increase to +3, or to +4 if you have legendary proficiency in spell attack rolls.{/Blue}"), Target.MultipleCreatureTargets(Target.Ranged(6), Target.RangedFriend(6).WithAdditionalConditionOnTargetCreature((self, ally) => self == ally ? Usability.NotUsableOnThisCreature("Cannot target yourself") : Usability.Usable)), level, null)
+                 "\n\n{Blue}If you take the Aid reaction you prepared for and succeed at your roll, these bonuses increase to +2 on the attack you're Aiding. On a critical success, they increase to +3, or to +4 if you have legendary proficiency in spell attack rolls.{/Blue}"), 
+                Target.MultipleCreatureTargets(Target.Ranged(6), Target.RangedFriend(6)
+                    .WithAdditionalConditionOnTargetCreature((self, ally) => self == ally ? Usability.NotUsableOnThisCreature("Cannot target yourself") : Usability.Usable)), level, null)
                 .WithActionCost(1).WithSoundEffect(SfxName.PositivePing)
                 .WithEffectOnChosenTargets(async (spell, self, targets) =>
                 {
