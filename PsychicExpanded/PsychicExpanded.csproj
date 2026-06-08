@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0-windows</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <Platforms>AnyCPU;x64</Platforms>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Reference Include="Common">
+        <HintPath>D:\SteamLibrary\steamapps\common\Dawnsbury Days\Data\Common.dll</HintPath>
+      </Reference>
+      <Reference Include="Dawnsbury Days">
+        <HintPath>D:\SteamLibrary\steamapps\common\Dawnsbury Days\Data\Dawnsbury Days.dll</HintPath>
+      </Reference>
+      <Reference Include="MonoGame.Framework">
+        <HintPath>D:\SteamLibrary\steamapps\common\Dawnsbury Days\Data\MonoGame.Framework.dll</HintPath>
+      </Reference>
+      <Reference Include="RemasterExpanded">
+        <HintPath>..\..\DawnniExPatchMod\RemasterExpanded\bin\Debug\net9.0-windows\RemasterExpanded.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Lib.Harmony" Version="2.3.6" />
+    </ItemGroup>
+
+</Project>
